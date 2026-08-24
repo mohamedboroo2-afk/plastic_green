@@ -1,0 +1,42 @@
+{% extends 'core/base.html' %}
+{% block title %}تأكيد طلب - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">تأكيد استلام الطلب</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5>تفاصيل الطلب</h5>
+        <p><strong>المشارك:</strong> {{ tree_request.participant.name }}</p>
+        <p><strong>نوع الشجرة:</strong> {{ tree_request.tree.tree_type }}</p>
+        <p><strong>العدد المطلوب:</strong> {{ tree_request.quantity }}</p>
+        <p><strong>رقم الدور:</strong> {{ tree_request.position }}</p>
+        <p><strong>الحالة الحالية:</strong> {{ tree_request.get_status_display }}</p>
+        
+        <hr>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label">عدد الأشجار المقدمة</label>
+                {{ form.trees_provided }}
+                <small class="text-muted">العدد المطلوب: {{ tree_request.quantity }}</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">ملاحظات الإكمال (اختياري)</label>
+                {{ form.notes }}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/requests/" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-check"></i> تأكيد الاستلام
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'core/base.html' %}
+{% block title %}طلب شجرة - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">طلب شجرة جديدة</h1>
+</div>
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label">المشارك</label>
+        {{ form.participant }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">نوع الشجرة</label>
+        {{ form.tree }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">العدد</label>
+        {{ form.quantity }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label">ملاحظات</label>
+        {{ form.notes }}
+    </div>
+    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+        <button type="submit" class="btn btn-success">
+            <i class="fas fa-save"></i> تقديم الطلب
+        </button>
+    </div>
+</form>
+{% endblock %}

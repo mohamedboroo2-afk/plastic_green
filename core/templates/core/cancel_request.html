@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+{% block title %}إلغاء طلب - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">تأكيد إلغاء الطلب</h1>
+</div>
+<div class="card">
+    <div class="card-body">
+        <p>هل أنت متأكد من إلغاء طلب <strong>{{ tree_request.participant.name }}</strong> 
+        لـ {{ tree_request.tree.get_tree_type_display }} × {{ tree_request.quantity }}؟</p>
+        <form method="post">
+            {% csrf_token %}
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'core:tree_requests_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash"></i> تأكيد الإلغاء
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

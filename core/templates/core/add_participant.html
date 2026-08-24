@@ -1,0 +1,154 @@
+{% extends 'core/base.html' %}
+{% block title %}إدارة المشاركين - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-users text-success"></i> 
+        {% if edit_mode %}تعديل بيانات مشارك{% else %}إدارة المشاركين{% endif %}
+    </h1>
+</div>
+
+<div class="row">
+    <!-- نموذج إضافة/تعديل مشارك -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-{% if edit_mode %}edit{% else %}user-plus{% endif %}"></i>
+                {% if edit_mode %}تعديل المشارك{% else %}إضافة مشارك جديد{% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">الاسم <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">رقم الموبايل <span class="text-danger">*</span></label>
+                        {{ form.phone }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">العنوان</label>
+                        {{ form.address }}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-{% if edit_mode %}warning{% else %}success{% endif %}">
+                            <i class="fas fa-{% if edit_mode %}save{% else %}plus{% endif %}"></i>
+                            {% if edit_mode %}تحديث{% else %}إضافة{% endif %}
+                        </button>
+                        {% if edit_mode %}
+                            <a href="{% url 'core:add_participant' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> إلغاء التعديل
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة المشاركين -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list"></i> قائمة المشاركين</span>
+                <span class="badge bg-light text-dark">{{ participants.count }} مشارك</span>
+            </div>
+            <div class="card-body">
+                {% if participants %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>الاسم</th>
+                                    <th>رقم الموبايل</th>
+                                    <th>العنوان</th>
+                                    <th>تاريخ الانضمام</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for participant in participants %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ participant.name }}</strong></td>
+                                    <td>{{ participant.phone }}</td>
+                                    <td>{{ participant.address|default:"-"|truncatechars:20 }}</td>
+                                    <td>{{ participant.join_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'core:participant_detail' participant.pk %}" class="btn btn-info" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'core:edit_participant' participant.pk %}" class="btn btn-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'core:delete_participant' participant.pk %}" class="btn btn-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف المشارك "{{ participant.name }}"؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">لا يوجد مشاركون مسجلون حالياً</p>
+                        <p class="text-muted small">أضف أول مشارك من خلال النموذج المجاور</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إحصائيات سريعة -->
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <i class="fas fa-chart-simple"></i> إحصائيات
+            </div>
+            <div class="card-body">
+                <h6>إجمالي المشاركين:</h6>
+                <h3 class="text-success">{{ participants.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <i class="fas fa-user-plus"></i> آخر مشارك
+            </div>
+            <div class="card-body">
+                {% if participants %}
+                    <h6>{{ participants.first.name }}</h6>
+                    <small class="text-muted">{{ participants.first.join_date|date:"Y-m-d" }}</small>
+                {% else %}
+                    <p class="text-muted">لا يوجد</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <i class="fas fa-info-circle"></i> معلومات
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-circle text-success"></i> يمكنك إضافة مشاركين جدد
+                    <br>
+                    <i class="fas fa-circle text-warning"></i> يمكنك تعديل أو حذف أي مشارك
+                    <br>
+                    <i class="fas fa-circle text-info"></i> اضغط على "عرض التفاصيل" لمشاهدة نشاط المشارك
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

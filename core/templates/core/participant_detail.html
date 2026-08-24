@@ -1,0 +1,129 @@
+{% extends 'core/base.html' %}
+{% block title %}تفاصيل المشارك - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-user text-success"></i> {{ participant.name }}</h1>
+    <div>
+        <a href="{% url 'core:edit_participant' participant.pk %}" class="btn btn-warning">
+            <i class="fas fa-edit"></i> تعديل
+        </a>
+        <a href="{% url 'core:add_participant' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-right"></i> رجوع
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-info-circle"></i> معلومات شخصية
+            </div>
+            <div class="card-body">
+                <p><strong>الاسم:</strong> {{ participant.name }}</p>
+                <p><strong>رقم الموبايل:</strong> {{ participant.phone }}</p>
+                <p><strong>العنوان:</strong> {{ participant.address|default:"غير محدد" }}</p>
+                <p><strong>تاريخ الانضمام:</strong> {{ participant.join_date|date:"Y-m-d" }}</p>
+                <p><strong>الحالة:</strong> 
+                    {% if participant.is_active %}
+                        <span class="badge bg-success">نشط</span>
+                    {% else %}
+                        <span class="badge bg-danger">غير نشط</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-recycle"></i> إحصائيات البلاستيك
+            </div>
+            <div class="card-body">
+                <h5>إجمالي البلاستيك المجمع</h5>
+                <h2 class="text-success">{{ total_weight|floatformat:1 }} <small>كجم</small></h2>
+                <hr>
+                <h5>عدد المبيعات</h5>
+                <h2 class="text-primary">{{ sales.count }}</h2>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-tree"></i> طلبات الأشجار
+            </div>
+            <div class="card-body">
+                <h5>إجمالي الطلبات</h5>
+                <h2 class="text-info">{{ requests.count }}</h2>
+                <hr>
+                <h5>الطلبات المكتملة</h5>
+                <h2 class="text-success">{{ participant.get_completed_requests_count }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-light">
+                <i class="fas fa-receipt"></i> سجل المبيعات
+            </div>
+            <div class="card-body">
+                {% if sales %}
+                    <div class="list-group">
+                        {% for sale in sales %}
+                            <a href="{% url 'core:sale_detail' sale.pk %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>{{ sale.sale_date|date:"Y-m-d" }}</strong>
+                                        <br>
+                                        <small>{{ sale.weight_kg }} كجم - {{ sale.total_price }} ج.م</small>
+                                    </div>
+                                    <span class="badge bg-success">{{ sale.weight_kg|floatformat:1 }} كجم</span>
+                                </div>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">لا توجد مبيعات مسجلة</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-light">
+                <i class="fas fa-list"></i> طلبات الأشجار
+            </div>
+            <div class="card-body">
+                {% if requests %}
+                    <div class="list-group">
+                        {% for req in requests %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <strong>{{ req.tree.tree_type }}</strong>
+                                        <br>
+                                        <small>العدد: {{ req.quantity }}</small>
+                                    </div>
+                                    <span class="status-badge status-{{ req.status }}">
+                                        {{ req.get_status_display }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">{{ req.request_date|date:"Y-m-d" }}</small>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center">لا توجد طلبات</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,100 @@
+{% extends 'core/base.html' %}
+{% block title %}إدارة الأشجار - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">
+        <i class="fas fa-tree text-success"></i> 
+        {% if edit_mode %}تعديل نوع شجرة{% else %}إضافة نوع شجرة جديد{% endif %}
+    </h1>
+</div>
+
+<div class="row">
+    <!-- نموذج إضافة/تعديل شجرة -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-{% if edit_mode %}edit{% else %}plus{% endif %}"></i>
+                {% if edit_mode %}تعديل الشجرة{% else %}إضافة شجرة جديدة{% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">نوع الشجرة <span class="text-danger">*</span></label>
+                        {{ form.tree_type }}
+                        <small class="text-muted d-block mt-1">أدخل اسم الشجرة (مثال: تمر، رمان، مانجو، إلخ)</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">وصف (اختياري)</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-{% if edit_mode %}warning{% else %}success{% endif %}">
+                            <i class="fas fa-{% if edit_mode %}save{% else %}plus{% endif %}"></i>
+                            {% if edit_mode %}تحديث{% else %}إضافة{% endif %}
+                        </button>
+                        {% if edit_mode %}
+                            <a href="{% url 'core:add_tree' %}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> إلغاء التعديل
+                            </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة الأشجار -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list"></i> قائمة أنواع الأشجار</span>
+                <span class="badge bg-light text-dark">{{ trees.count }} نوع</span>
+            </div>
+            <div class="card-body">
+                {% if trees %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>نوع الشجرة</th>
+                                    <th>الوصف</th>
+                                    <th>تاريخ الإضافة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tree in trees %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><span class="badge bg-success">{{ tree.tree_type }}</span></td>
+                                    <td>{{ tree.description|default:"-"|truncatechars:30 }}</td>
+                                    <td>{{ tree.created_at|date:"Y-m-d" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'core:edit_tree' tree.pk %}" class="btn btn-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'core:delete_tree' tree.pk %}" class="btn btn-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف نوع الشجرة "{{ tree.tree_type }}"؟')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tree fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">لا توجد أشجار مسجلة حالياً</p>
+                        <p class="text-muted small">أضف أول نوع شجرة من خلال النموذج المجاور</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

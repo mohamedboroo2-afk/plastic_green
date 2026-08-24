@@ -1,0 +1,42 @@
+{% extends 'core/base.html' %}
+{% block title %}تأكيد الحذف - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-trash text-danger"></i> تأكيد حذف الشجرة</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="fas fa-exclamation-triangle"></i> تحذير!
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">هل أنت متأكد من حذف نوع الشجرة التالي؟</h5>
+                <div class="alert alert-warning">
+                    <strong>نوع الشجرة:</strong> {{ tree.tree_type }}
+                    {% if tree.description %}
+                        <br><strong>الوصف:</strong> {{ tree.description }}
+                    {% endif %}
+                    <br><strong>تاريخ الإضافة:</strong> {{ tree.created_at|date:"Y-m-d" }}
+                </div>
+                <p class="text-danger">
+                    <i class="fas fa-info-circle"></i> 
+                    <strong>ملاحظة:</strong> حذف هذا النوع سيؤثر على الطلبات والمبيعات المرتبطة به.
+                </p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'core:add_tree' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

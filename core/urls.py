@@ -22,4 +22,6 @@ urlpatterns = [
     path('request/confirm/<int:pk>/', views.confirm_request, name='confirm_request'),
     path('request/cancel/<int:pk>/', views.cancel_request, name='cancel_request'),
     path('statistics/', views.statistics, name='statistics'),
+    path('logout-confirm/', views.logout_confirm, name='logout_confirm'),
+
 ]

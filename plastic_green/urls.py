@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django.urls import path, include  # تأكد من إضافة include هنا
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('core.urls')),  # هذا السطر يعمل الآن
+    path('accounts/', include('django.contrib.auth.urls')),  # هذا السطر مهم
+    path('', include('core.urls')),
 ]

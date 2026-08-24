@@ -1,5 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.contrib.auth import logout
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Sum, Count
 from django.utils import timezone
 from .models import Sale, Participant, Tree, TreeRequest
@@ -8,40 +10,68 @@ from .forms import (
     ConfirmRequestForm, SaleTreeFormSet
 )
 
-def index(request):
-    total_sales_weight = Sale.objects.aggregate(total=Sum('weight_kg'))['total'] or 0
-    total_sales_value = Sale.objects.aggregate(total=Sum('total_price'))['total'] or 0
-    
-    # حساب إجمالي تكلفة الأشجار المشتراة
-    total_trees_cost = 0
-    for sale in Sale.objects.all():
-        total_trees_cost += sale.get_trees_total_cost()
-    
-    remaining_balance = total_sales_value - total_trees_cost
-    
-    total_participants = Participant.objects.filter(is_active=True).count()
-    pending_requests = TreeRequest.objects.filter(status='pending').count()
-    completed_requests = TreeRequest.objects.filter(status='completed').count()
-    recent_sales = Sale.objects.all()[:5]
-    pending_requests_list = TreeRequest.objects.filter(
-        status__in=['pending', 'in_progress']
-    ).order_by('position')[:10]
-    
-    context = {
-        'total_sales_weight': total_sales_weight,
-        'total_sales_value': total_sales_value,
-        'total_trees_cost': total_trees_cost,
-        'remaining_balance': remaining_balance,
-        'total_participants': total_participants,
-        'pending_requests': pending_requests,
-        'completed_requests': completed_requests,
-        'recent_sales': recent_sales,
-        'pending_requests_list': pending_requests_list,
-    }
-    return render(request, 'core/index.html', context)
+# دوال مساعدة للتحقق من الصلاحيات
+def is_admin(user):
+    """التحقق من أن المستخدم أدمن (عضو في مجموعة Admin أو لديه صلاحيات كاملة)"""
+    return user.is_superuser or user.is_staff
 
+def is_user(user):
+    """التحقق من أن المستخدم لديه صلاحية الدخول (عضو في مجموعة مستخدم أو أدمن)"""
+    return user.is_authenticated
+
+# ==================== الصفحة الرئيسية ====================
+
+@login_required
+def index(request):
+    """الصفحة الرئيسية - تختلف حسب صلاحية المستخدم"""
+    if is_admin(request.user):
+        # عرض كل شيء للأدمن
+        total_sales_weight = Sale.objects.aggregate(total=Sum('weight_kg'))['total'] or 0
+        total_sales_value = Sale.objects.aggregate(total=Sum('total_price'))['total'] or 0
+        
+        total_trees_cost = 0
+        for sale in Sale.objects.all():
+            total_trees_cost += sale.get_trees_total_cost()
+        
+        remaining_balance = total_sales_value - total_trees_cost
+        total_participants = Participant.objects.filter(is_active=True).count()
+        pending_requests = TreeRequest.objects.filter(status='pending').count()
+        completed_requests = TreeRequest.objects.filter(status='completed').count()
+        recent_sales = Sale.objects.all()[:5]
+        pending_requests_list = TreeRequest.objects.filter(
+            status__in=['pending', 'in_progress']
+        ).order_by('position')[:10]
+        
+        context = {
+            'total_sales_weight': total_sales_weight,
+            'total_sales_value': total_sales_value,
+            'total_trees_cost': total_trees_cost,
+            'remaining_balance': remaining_balance,
+            'total_participants': total_participants,
+            'pending_requests': pending_requests,
+            'completed_requests': completed_requests,
+            'recent_sales': recent_sales,
+            'pending_requests_list': pending_requests_list,
+            'is_admin': True,
+        }
+        return render(request, 'core/index.html', context)
+    else:
+        # عرض بسيط للمستخدم العادي
+        total_participants = Participant.objects.filter(is_active=True).count()
+        pending_requests = TreeRequest.objects.filter(status='pending').count()
+        
+        context = {
+            'total_participants': total_participants,
+            'pending_requests': pending_requests,
+            'is_admin': False,
+        }
+        return render(request, 'core/index_user.html', context)
+
+# ==================== دوال المبيعات (للأدمن فقط) ====================
+
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def add_sale(request):
-    """إضافة بيع جديد وعرض قائمة المبيعات"""
     if request.method == 'POST':
         form = SaleForm(request.POST)
         if form.is_valid():
@@ -53,19 +83,16 @@ def add_sale(request):
             if formset.is_valid():
                 formset.save()
                 messages.success(request, 'تم إضافة عملية البيع بنجاح!')
-                return redirect('/sale/add/')  # البقاء في نفس الصفحة
+                return redirect('/sale/add/')
     else:
         form = SaleForm()
         formset = SaleTreeFormSet()
     
-    # جلب جميع المبيعات لعرضها في نفس الصفحة
     sales = Sale.objects.all().order_by('-sale_date')
     
-    # حساب الإحصائيات
     total_sales_weight = Sale.objects.aggregate(total=Sum('weight_kg'))['total'] or 0
     total_sales_value = Sale.objects.aggregate(total=Sum('total_price'))['total'] or 0
     
-    # حساب إجمالي تكلفة الأشجار
     total_trees_cost = 0
     for sale_obj in Sale.objects.all():
         total_trees_cost += sale_obj.get_trees_total_cost()
@@ -84,8 +111,9 @@ def add_sale(request):
     }
     return render(request, 'core/add_sale.html', context)
 
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def edit_sale(request, pk):
-    """تعديل عملية بيع"""
     sale = get_object_or_404(Sale, pk=pk)
     
     if request.method == 'POST':
@@ -115,8 +143,9 @@ def edit_sale(request, pk):
     }
     return render(request, 'core/add_sale.html', context)
 
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def delete_sale(request, pk):
-    """حذف عملية بيع"""
     sale = get_object_or_404(Sale, pk=pk)
     sale_date = sale.sale_date
     sale_weight = sale.weight_kg
@@ -131,6 +160,9 @@ def delete_sale(request, pk):
         'title': 'تأكيد الحذف'
     }
     return render(request, 'core/delete_sale.html', context)
+
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def sale_detail(request, pk):
     sale = get_object_or_404(Sale, pk=pk)
     sale_trees = sale.saletree_set.all()
@@ -145,18 +177,19 @@ def sale_detail(request, pk):
     }
     return render(request, 'core/sale_detail.html', context)
 
+# ==================== دوال المشاركين (للجميع) ====================
+
+@login_required
 def add_participant(request):
-    """إضافة مشارك جديد وعرض قائمة المشاركين"""
     if request.method == 'POST':
         form = ParticipantForm(request.POST)
         if form.is_valid():
             participant = form.save()
             messages.success(request, f'تم إضافة المشارك "{participant.name}" بنجاح!')
-            return redirect('/participant/add/')  # البقاء في نفس الصفحة
+            return redirect('/participant/add/')
     else:
         form = ParticipantForm()
     
-    # جلب جميع المشاركين لعرضهم في نفس الصفحة
     participants = Participant.objects.all().order_by('-join_date')
     context = {
         'form': form,
@@ -165,8 +198,8 @@ def add_participant(request):
     }
     return render(request, 'core/add_participant.html', context)
 
+@login_required
 def edit_participant(request, pk):
-    """تعديل بيانات مشارك"""
     participant = get_object_or_404(Participant, pk=pk)
     
     if request.method == 'POST':
@@ -188,8 +221,8 @@ def edit_participant(request, pk):
     }
     return render(request, 'core/add_participant.html', context)
 
+@login_required
 def delete_participant(request, pk):
-    """حذف مشارك"""
     participant = get_object_or_404(Participant, pk=pk)
     participant_name = participant.name
     
@@ -204,6 +237,7 @@ def delete_participant(request, pk):
     }
     return render(request, 'core/delete_participant.html', context)
 
+@login_required
 def participant_detail(request, pk):
     participant = get_object_or_404(Participant, pk=pk)
     sales = participant.sale_set.all()
@@ -217,6 +251,9 @@ def participant_detail(request, pk):
     }
     return render(request, 'core/participant_detail.html', context)
 
+# ==================== دوال الأشجار (للجميع) ====================
+
+@login_required
 def add_tree(request):
     if request.method == 'POST':
         form = TreeForm(request.POST)
@@ -227,7 +264,6 @@ def add_tree(request):
     else:
         form = TreeForm()
     
-    # جلب جميع الأشجار لعرضها في نفس الصفحة
     trees = Tree.objects.all().order_by('tree_type')
     context = {
         'form': form,
@@ -236,8 +272,14 @@ def add_tree(request):
     }
     return render(request, 'core/add_tree.html', context)
 
+@login_required
+def tree_list(request):
+    trees = Tree.objects.all().order_by('tree_type')
+    context = {'trees': trees}
+    return render(request, 'core/tree_list.html', context)
+
+@login_required
 def edit_tree(request, pk):
-    """تعديل نوع شجرة"""
     tree = get_object_or_404(Tree, pk=pk)
     
     if request.method == 'POST':
@@ -259,8 +301,8 @@ def edit_tree(request, pk):
     }
     return render(request, 'core/add_tree.html', context)
 
+@login_required
 def delete_tree(request, pk):
-    """حذف نوع شجرة"""
     tree = get_object_or_404(Tree, pk=pk)
     tree_name = tree.tree_type
     
@@ -274,23 +316,41 @@ def delete_tree(request, pk):
         'title': 'تأكيد الحذف'
     }
     return render(request, 'core/delete_tree.html', context)
-def tree_list(request):
-    trees = Tree.objects.all().order_by('tree_type')
-    context = {'trees': trees}
-    return render(request, 'core/tree_list.html', context)
 
+# ==================== دوال طلبات الأشجار (للجميع) ====================
+
+@login_required
 def add_tree_request(request):
     if request.method == 'POST':
         form = TreeRequestForm(request.POST)
         if form.is_valid():
             tree_request = form.save()
             messages.success(request, f'تم إضافة طلب الشجرة بنجاح! رقم الطلب: {tree_request.position}')
-            return redirect('/requests/')  # استخدم المسار المباشر
+            return redirect('/requests/')
     else:
         form = TreeRequestForm()
     context = {'form': form, 'title': 'طلب شجرة جديدة'}
     return render(request, 'core/add_tree_request.html', context)
 
+@login_required
+def tree_requests_list(request):
+    """قائمة الطلبات - للأدمن فقط"""
+    if not is_admin(request.user):
+        messages.warning(request, 'ليس لديك صلاحية لعرض هذه الصفحة')
+        return redirect('/')
+    
+    pending_requests = TreeRequest.objects.filter(status='pending').order_by('position')
+    completed_requests = TreeRequest.objects.filter(status='completed').order_by('-completed_date')
+    cancelled_requests = TreeRequest.objects.filter(status='cancelled').order_by('-request_date')
+    
+    context = {
+        'pending_requests': pending_requests,
+        'completed_requests': completed_requests,
+        'cancelled_requests': cancelled_requests,
+    }
+    return render(request, 'core/tree_requests_list.html', context)
+
+@login_required
 def confirm_request(request, pk):
     tree_request = get_object_or_404(TreeRequest, pk=pk)
     
@@ -309,10 +369,9 @@ def confirm_request(request, pk):
             tree_request.notes = (tree_request.notes or '') + f'\nتم الإكمال: {notes}'
             tree_request.save()
             
-            # إعادة ترتيب الأرقام للطلبات التالية
             next_requests = TreeRequest.objects.filter(
                 position__gt=tree_request.position,
-                status='pending'  # فقط قيد الانتظار
+                status='pending'
             ).order_by('position')
             
             for req in next_requests:
@@ -327,6 +386,7 @@ def confirm_request(request, pk):
     context = {'tree_request': tree_request, 'form': form}
     return render(request, 'core/confirm_request.html', context)
 
+@login_required
 def cancel_request(request, pk):
     tree_request = get_object_or_404(TreeRequest, pk=pk)
     
@@ -338,10 +398,9 @@ def cancel_request(request, pk):
         tree_request.status = 'cancelled'
         tree_request.save()
         
-        # إعادة ترتيب الأرقام للطلبات التالية
         next_requests = TreeRequest.objects.filter(
             position__gt=tree_request.position,
-            status='pending'  # فقط قيد الانتظار
+            status='pending'
         ).order_by('position')
         
         for req in next_requests:
@@ -354,89 +413,14 @@ def cancel_request(request, pk):
     context = {'tree_request': tree_request}
     return render(request, 'core/cancel_request.html', context)
 
-def tree_requests_list(request):
-    pending_requests = TreeRequest.objects.filter(status='pending').order_by('position')
-    completed_requests = TreeRequest.objects.filter(status='completed').order_by('-completed_date')
-    cancelled_requests = TreeRequest.objects.filter(status='cancelled').order_by('-request_date')
-    
-    context = {
-        'pending_requests': pending_requests,
-        'completed_requests': completed_requests,
-        'cancelled_requests': cancelled_requests,
-    }
-    return render(request, 'core/tree_requests_list.html', context)
-def confirm_request(request, pk):
-    tree_request = get_object_or_404(TreeRequest, pk=pk)
-    
-    # إذا كان الطلب مكتملاً بالفعل
-    if tree_request.status == 'completed':
-        messages.warning(request, 'هذا الطلب مكتمل بالفعل!')
-        return redirect('/requests/')
-    
-    if request.method == 'POST':
-        form = ConfirmRequestForm(request.POST)
-        if form.is_valid():
-            trees_provided = form.cleaned_data['trees_provided']
-            notes = form.cleaned_data['notes']
-            
-            # تحديث حالة الطلب
-            tree_request.status = 'completed'
-            tree_request.completed_date = timezone.now()
-            tree_request.notes = (tree_request.notes or '') + f'\nتم الإكمال: {notes}'
-            tree_request.save()
-            
-            # إعادة ترتيب الأرقام للطلبات التالية
-            next_requests = TreeRequest.objects.filter(
-                position__gt=tree_request.position,
-                status__in=['pending', 'in_progress']
-            ).order_by('position')
-            
-            for req in next_requests:
-                req.position = req.position - 1
-                req.save()
-            
-            messages.success(request, 'تم تأكيد استلام الشجرة بنجاح!')
-            return redirect('/requests/')
-    else:
-        # عرض النموذج مع القيمة الافتراضية
-        form = ConfirmRequestForm(initial={'trees_provided': tree_request.quantity})
-    
-    context = {
-        'tree_request': tree_request,
-        'form': form,
-    }
-    return render(request, 'core/confirm_request.html', context)
+# ==================== الإحصائيات (للأدمن فقط) ====================
 
-def cancel_request(request, pk):
-    tree_request = get_object_or_404(TreeRequest, pk=pk)
-    if tree_request.status == 'completed':
-        messages.warning(request, 'لا يمكن إلغاء طلب مكتمل!')
-        return redirect('tree_requests_list')
-    
-    if request.method == 'POST':
-        tree_request.status = 'cancelled'
-        tree_request.save()
-        
-        next_requests = TreeRequest.objects.filter(
-            position__gt=tree_request.position,
-            status__in=['pending', 'in_progress']
-        ).order_by('position')
-        
-        for req in next_requests:
-            req.position = req.position - 1
-            req.save()
-        
-        messages.success(request, 'تم إلغاء الطلب بنجاح!')
-        return redirect('/requests/')
-    
-    context = {'tree_request': tree_request}
-    return render(request, 'core/cancel_request.html', context)
-
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def statistics(request):
     total_sales_weight = Sale.objects.aggregate(total=Sum('weight_kg'))['total'] or 0
     total_sales_value = Sale.objects.aggregate(total=Sum('total_price'))['total'] or 0
     
-    # حساب إجمالي تكلفة الأشجار
     total_trees_cost = 0
     for sale in Sale.objects.all():
         total_trees_cost += sale.get_trees_total_cost()
@@ -479,3 +463,10 @@ def statistics(request):
         'monthly_sales': monthly_sales,
     }
     return render(request, 'core/statistics.html', context)
+
+@login_required
+def logout_confirm(request):
+    if request.method == 'POST':
+        logout(request)
+        return redirect('/accounts/login/')
+    return render(request, 'core/logout_confirm.html')

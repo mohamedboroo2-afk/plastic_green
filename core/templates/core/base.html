@@ -33,31 +33,44 @@
                         <i class="fas fa-leaf"></i> بلاستيك أخضر
                     </h4>
                     <nav class="nav flex-column">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:index' %}">
-                            <i class="fas fa-home"></i> الرئيسية
-                        </a>
-                        <a class="nav-link {% if 'sale' in request.path %}active{% endif %}" href="{% url 'core:add_sale' %}">
-                            <i class="fas fa-cart-plus"></i> إضافة بيع
-                        </a>
-                        <a class="nav-link {% if 'participant' in request.path %}active{% endif %}" href="{% url 'core:add_participant' %}">
-                            <i class="fas fa-user-plus"></i> إضافة مشارك
-                        </a>
-                        <a class="nav-link {% if 'tree' in request.path %}active{% endif %}" href="{% url 'core:add_tree' %}">
-                            <i class="fas fa-tree"></i> إضافة شجرة
-                        </a>
-                        <a class="nav-link {% if 'request' in request.path %}active{% endif %}" href="{% url 'core:add_tree_request' %}">
-                            <i class="fas fa-hand-holding-heart"></i> طلب شجرة
-                        </a>
-                        <a class="nav-link {% if 'requests' in request.path %}active{% endif %}" href="{% url 'core:tree_requests_list' %}">
-                            <i class="fas fa-list"></i> قائمة الطلبات
-                        </a>
-                        <a class="nav-link {% if 'statistics' in request.path %}active{% endif %}" href="{% url 'core:statistics' %}">
-                            <i class="fas fa-chart-bar"></i> الإحصائيات
-                        </a>
-                        <a class="nav-link" href="/admin/">
-                            <i class="fas fa-cog"></i> لوحة التحكم
-                        </a>
-                    </nav>
+    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:index' %}">
+        <i class="fas fa-home"></i> الرئيسية
+    </a>
+    
+    <!-- روابط متاحة للجميع -->
+    <a class="nav-link {% if 'participant' in request.path %}active{% endif %}" href="{% url 'core:add_participant' %}">
+        <i class="fas fa-user-plus"></i> إضافة مشارك
+    </a>
+    <a class="nav-link {% if 'tree' in request.path %}active{% endif %}" href="{% url 'core:add_tree' %}">
+        <i class="fas fa-tree"></i> إضافة شجرة
+    </a>
+    <a class="nav-link {% if 'request' in request.path %}active{% endif %}" href="{% url 'core:add_tree_request' %}">
+        <i class="fas fa-hand-holding-heart"></i> طلب شجرة
+    </a>
+    
+    <!-- روابط للأدمن فقط -->
+    {% if user.is_superuser or user.is_staff %}
+        <hr>
+        <a class="nav-link {% if 'sale' in request.path %}active{% endif %}" href="{% url 'core:add_sale' %}">
+            <i class="fas fa-cart-plus"></i> إضافة بيع
+        </a>
+        <a class="nav-link {% if 'requests' in request.path %}active{% endif %}" href="{% url 'core:tree_requests_list' %}">
+            <i class="fas fa-list"></i> قائمة الطلبات
+        </a>
+        <a class="nav-link {% if 'statistics' in request.path %}active{% endif %}" href="{% url 'core:statistics' %}">
+            <i class="fas fa-chart-bar"></i> الإحصائيات
+        </a>
+        <a class="nav-link" href="/admin/">
+            <i class="fas fa-cog"></i> لوحة التحكم
+        </a>
+    {% endif %}
+    
+    <!-- تسجيل الخروج -->
+    <hr>
+<a class="nav-link text-danger" href="{% url 'core:logout_confirm' %}">
+    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+</a>
+</nav>
                 </div>
             </div>
             <div class="col-md-10 col-lg-10 ms-sm-auto px-4 py-3">

@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% block title %}الرئيسية - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">لوحة التحكم - مستخدم</h1>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title text-muted">المشاركون</h5>
+                <h2 class="card-text">{{ total_participants }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title text-muted">طلبات قيد الانتظار</h5>
+                <h2 class="card-text">{{ pending_requests }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <strong>مرحباً بك!</strong> يمكنك إضافة مشاركين وأشجار وطلبات أشجار.
+            <br>
+            <small>للمشاهدة الكاملة والإحصائيات، يرجى التواصل مع المدير.</small>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-user-plus fa-3x mb-2"></i>
+                <h5>إضافة مشارك</h5>
+                <a href="{% url 'core:add_participant' %}" class="btn btn-light btn-sm">اذهب</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tree fa-3x mb-2"></i>
+                <h5>إضافة شجرة</h5>
+                <a href="{% url 'core:add_tree' %}" class="btn btn-light btn-sm">اذهب</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-hand-holding-heart fa-3x mb-2"></i>
+                <h5>طلب شجرة</h5>
+                <a href="{% url 'core:add_tree_request' %}" class="btn btn-light btn-sm">اذهب</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

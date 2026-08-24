@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+{% block title %}تسجيل الدخول - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-success text-white text-center">
+                <h4><i class="fas fa-leaf"></i> بلاستيك أخضر</h4>
+                <h5>تسجيل الدخول</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">اسم المستخدم</label>
+                        <input type="text" name="username" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">كلمة المرور</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">دخول</button>
+                </form>
+                {% if form.errors %}
+                    <div class="alert alert-danger mt-3">
+                        اسم المستخدم أو كلمة المرور غير صحيحة
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

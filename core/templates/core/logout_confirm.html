@@ -1,0 +1,23 @@
+{% extends 'core/base.html' %}
+{% block title %}تسجيل الخروج - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-center">
+                <h4><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</h4>
+            </div>
+            <div class="card-body text-center">
+                <p>هل أنت متأكد من رغبتك في تسجيل الخروج؟</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">نعم، تسجيل الخروج</button>
+                        <a href="{% url 'core:index' %}" class="btn btn-secondary">إلغاء</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

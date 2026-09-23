@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Participant, Tree, Sale, SaleTree, TreeRequest
+from .models import Participant, Tree, Sale, SaleTree, TreeRequest, ExpenseCategory, SaleExpense
+
 
 @admin.register(Participant)
 class ParticipantAdmin(admin.ModelAdmin):
@@ -7,24 +8,35 @@ class ParticipantAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'join_date']
     search_fields = ['name', 'phone']
 
+
 @admin.register(Tree)
 class TreeAdmin(admin.ModelAdmin):
-    list_display = ['tree_type', 'description', 'created_at']  # تم تغيير name إلى tree_type
-    list_filter = ['tree_type']
+    list_display = ['tree_type', 'description', 'created_at']
     search_fields = ['tree_type']
+
+
+@admin.register(ExpenseCategory)
+class ExpenseCategoryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description', 'created_at']
+    search_fields = ['name']
+
 
 @admin.register(Sale)
 class SaleAdmin(admin.ModelAdmin):
-    list_display = ['sale_date', 'weight_kg', 'total_price', 'participant']
+    list_display = ['sale_date', 'weight_kg', 'total_price']
     list_filter = ['sale_date']
-    search_fields = ['participant__name']
     readonly_fields = ['total_price']
+
 
 @admin.register(SaleTree)
 class SaleTreeAdmin(admin.ModelAdmin):
     list_display = ['sale', 'tree', 'quantity', 'price_per_tree']
-    list_filter = ['sale__sale_date']
-    search_fields = ['tree__tree_type']
+
+
+@admin.register(SaleExpense)
+class SaleExpenseAdmin(admin.ModelAdmin):
+    list_display = ['sale', 'category', 'quantity', 'price_per_unit']
+
 
 @admin.register(TreeRequest)
 class TreeRequestAdmin(admin.ModelAdmin):

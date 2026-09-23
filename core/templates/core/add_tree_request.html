@@ -2,30 +2,40 @@
 {% block title %}طلب شجرة - بلاستيك أخضر{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">طلب شجرة جديدة</h1>
+    <h1 class="h2"><i class="fas fa-hand-holding-heart text-success"></i> طلب شجرة جديدة</h1>
 </div>
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        <label class="form-label">المشارك</label>
-        {{ form.participant }}
+
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">المشارك <span class="text-danger">*</span></label>
+                        {{ form.participant }}
+                        <small class="text-muted d-block mt-1">اكتب اسماً للبحث السريع</small>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">نوع الشجرة <span class="text-danger">*</span></label>
+                        {{ form.tree }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">العدد <span class="text-danger">*</span></label>
+                        {{ form.quantity }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ form.notes }}
+                    </div>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> تقديم الطلب
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">نوع الشجرة</label>
-        {{ form.tree }}
-    </div>
-    <div class="mb-3">
-        <label class="form-label">العدد</label>
-        {{ form.quantity }}
-    </div>
-    <div class="mb-3">
-        <label class="form-label">ملاحظات</label>
-        {{ form.notes }}
-    </div>
-    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-        <button type="submit" class="btn btn-success">
-            <i class="fas fa-save"></i> تقديم الطلب
-        </button>
-    </div>
-</form>
+</div>
 {% endblock %}

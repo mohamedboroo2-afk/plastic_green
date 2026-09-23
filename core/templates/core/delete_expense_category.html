@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+{% block title %}حذف نوع مصروف{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white"><i class="fas fa-trash"></i> تأكيد الحذف</div>
+            <div class="card-body">
+                <p>هل أنت متأكد من حذف نوع المصروف <strong>{{ category.name }}</strong>؟</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'core:expense_categories' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-danger">حذف</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

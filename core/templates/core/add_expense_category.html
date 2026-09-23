@@ -1,0 +1,72 @@
+{% extends 'core/base.html' %}
+{% block title %}أنواع المصروفات - بلاستيك أخضر{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2"><i class="fas fa-coins text-warning"></i> إدارة أنواع المصروفات</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-warning text-white">
+                <i class="fas fa-{% if edit_mode %}edit{% else %}plus{% endif %}"></i>
+                {% if edit_mode %}تعديل{% else %}إضافة نوع مصروف{% endif %}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">اسم المصروف <span class="text-danger">*</span></label>
+                        {{ form.name }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">وصف</label>
+                        {{ form.description }}
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-{% if edit_mode %}warning{% else %}success{% endif %}">
+                            <i class="fas fa-save"></i> {% if edit_mode %}تحديث{% else %}إضافة{% endif %}
+                        </button>
+                        {% if edit_mode %}
+                            <a href="{% url 'core:expense_categories' %}" class="btn btn-secondary">إلغاء</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list"></i> أنواع المصروفات</span>
+                <span class="badge bg-light text-dark">{{ categories.count }}</span>
+            </div>
+            <div class="card-body">
+                {% if categories %}
+                    <table class="table table-hover">
+                        <thead><tr><th>#</th><th>الاسم</th><th>الوصف</th><th>إجراءات</th></tr></thead>
+                        <tbody>
+                            {% for c in categories %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td><strong>{{ c.name }}</strong></td>
+                                <td>{{ c.description|default:"-" }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'core:edit_expense_category' c.pk %}" class="btn btn-warning"><i class="fas fa-edit"></i></a>
+                                        <a href="{% url 'core:delete_expense_category' c.pk %}" class="btn btn-danger" onclick="return confirm('هل أنت متأكد؟')"><i class="fas fa-trash"></i></a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted text-center">لا توجد أنواع مصروفات. أضف أول نوع (مثل: أصيص، أكياس قمامة، بنزين، نقل)</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

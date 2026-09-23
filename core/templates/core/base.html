@@ -6,8 +6,8 @@
     <title>{% block title %}بلاستيك أخضر{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
-        .navbar-brand { font-weight: bold; color: #2e7d32 !important; }
         .sidebar { min-height: 100vh; background-color: #f8f9fa; border-left: 1px solid #dee2e6; }
         .sidebar .nav-link { color: #333; padding: 12px 20px; border-radius: 8px; margin: 4px 0; transition: all 0.3s; }
         .sidebar .nav-link:hover { background-color: #e8f5e9; color: #2e7d32; }
@@ -19,9 +19,26 @@
         .btn-success:hover { background-color: #1b5e20; border-color: #1b5e20; }
         .status-badge { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
         .status-pending { background-color: #fff3e0; color: #e65100; }
-        .status-in_progress { background-color: #e3f2fd; color: #0d47a1; }
         .status-completed { background-color: #e8f5e9; color: #1b5e20; }
         .status-cancelled { background-color: #fce4ec; color: #b71c1c; }
+
+        /* Select2 RTL Fix */
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid #ced4da;
+            border-radius: 0.375rem;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 36px;
+            padding-right: 12px;
+            text-align: right;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            left: 6px;
+            right: auto;
+        }
+        .select2-dropdown { direction: rtl; text-align: right; }
+        .select2-search--dropdown .select2-search__field { text-align: right; }
     </style>
 </head>
 <body>
@@ -33,44 +50,46 @@
                         <i class="fas fa-leaf"></i> بلاستيك أخضر
                     </h4>
                     <nav class="nav flex-column">
-    <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:index' %}">
-        <i class="fas fa-home"></i> الرئيسية
-    </a>
-    
-    <!-- روابط متاحة للجميع -->
-    <a class="nav-link {% if 'participant' in request.path %}active{% endif %}" href="{% url 'core:add_participant' %}">
-        <i class="fas fa-user-plus"></i> إضافة مشارك
-    </a>
-    <a class="nav-link {% if 'tree' in request.path %}active{% endif %}" href="{% url 'core:add_tree' %}">
-        <i class="fas fa-tree"></i> إضافة شجرة
-    </a>
-    <a class="nav-link {% if 'request' in request.path %}active{% endif %}" href="{% url 'core:add_tree_request' %}">
-        <i class="fas fa-hand-holding-heart"></i> طلب شجرة
-    </a>
-    
-    <!-- روابط للأدمن فقط -->
-    {% if user.is_superuser or user.is_staff %}
-        <hr>
-        <a class="nav-link {% if 'sale' in request.path %}active{% endif %}" href="{% url 'core:add_sale' %}">
-            <i class="fas fa-cart-plus"></i> إضافة بيع
-        </a>
-        <a class="nav-link {% if 'requests' in request.path %}active{% endif %}" href="{% url 'core:tree_requests_list' %}">
-            <i class="fas fa-list"></i> قائمة الطلبات
-        </a>
-        <a class="nav-link {% if 'statistics' in request.path %}active{% endif %}" href="{% url 'core:statistics' %}">
-            <i class="fas fa-chart-bar"></i> الإحصائيات
-        </a>
-        <a class="nav-link" href="/admin/">
-            <i class="fas fa-cog"></i> لوحة التحكم
-        </a>
-    {% endif %}
-    
-    <!-- تسجيل الخروج -->
-    <hr>
-<a class="nav-link text-danger" href="{% url 'core:logout_confirm' %}">
-    <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-</a>
-</nav>
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'core:index' %}">
+                            <i class="fas fa-home"></i> الرئيسية
+                        </a>
+                        <a class="nav-link {% if 'participant' in request.path %}active{% endif %}" href="{% url 'core:add_participant' %}">
+                            <i class="fas fa-user-plus"></i> إضافة مشارك
+                        </a>
+                        <a class="nav-link {% if 'tree' in request.path and 'expenses' not in request.path %}active{% endif %}" href="{% url 'core:add_tree' %}">
+                            <i class="fas fa-tree"></i> إضافة شجرة
+                        </a>
+                        <a class="nav-link {% if 'request/add' in request.path %}active{% endif %}" href="{% url 'core:add_tree_request' %}">
+                            <i class="fas fa-hand-holding-heart"></i> طلب شجرة
+                        </a>
+
+                        {% if user.is_superuser or user.is_staff %}
+                            <hr>
+                            <a class="nav-link {% if 'sale' in request.path %}active{% endif %}" href="{% url 'core:add_sale' %}">
+                                <i class="fas fa-cart-plus"></i> إضافة بيع
+                            </a>
+                            <a class="nav-link {% if 'expenses' in request.path %}active{% endif %}" href="{% url 'core:expense_categories' %}">
+                                <i class="fas fa-coins"></i> أنواع المصروفات
+                            </a>
+                            <a class="nav-link {% if 'requests' in request.path and 'request/add' not in request.path %}active{% endif %}" href="{% url 'core:tree_requests_list' %}">
+                                <i class="fas fa-list"></i> قائمة الطلبات
+                            </a>
+                            <a class="nav-link {% if 'statistics' in request.path %}active{% endif %}" href="{% url 'core:statistics' %}">
+                                <i class="fas fa-chart-bar"></i> الإحصائيات
+                            </a>
+                            <a class="nav-link" href="/admin/">
+                                <i class="fas fa-cog"></i> لوحة التحكم
+                            </a>
+                        {% endif %}
+
+                        <hr>
+                        <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link text-danger" style="background:none;border:none;cursor:pointer;width:100%;text-align:right;padding:12px 20px;">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                        </form>
+                    </nav>
                 </div>
             </div>
             <div class="col-md-10 col-lg-10 ms-sm-auto px-4 py-3">
@@ -86,7 +105,21 @@
             </div>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2-participant').select2({
+                placeholder: 'ابحث بالاسم أو رقم الموبايل...',
+                allowClear: true,
+                language: {
+                    noResults: function() { return "لا توجد نتائج"; },
+                    searching: function() { return "جاري البحث..."; }
+                }
+            });
+        });
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

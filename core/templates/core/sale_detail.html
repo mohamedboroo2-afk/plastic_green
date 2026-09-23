@@ -1,76 +1,91 @@
 {% extends 'core/base.html' %}
-{% block title %}تفاصيل البيع - بلاستيك أخضر{% endblock %}
+{% block title %}تفاصيل البيع{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2"><i class="fas fa-receipt text-success"></i> تفاصيل البيع</h1>
-    <a href="{% url 'core:index' %}" class="btn btn-secondary">
-        <i class="fas fa-arrow-right"></i> رجوع
-    </a>
+    <a href="{% url 'core:add_sale' %}" class="btn btn-secondary"><i class="fas fa-arrow-right"></i> رجوع</a>
 </div>
 
 <div class="row">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-success text-white">
-                <i class="fas fa-info-circle"></i> معلومات البيع
-            </div>
+            <div class="card-header bg-success text-white"><i class="fas fa-info-circle"></i> معلومات البيع</div>
             <div class="card-body">
                 <p><strong>التاريخ:</strong> {{ sale.sale_date }}</p>
                 <p><strong>الوزن:</strong> {{ sale.weight_kg }} كجم</p>
                 <p><strong>سعر الكيلو:</strong> {{ sale.price_per_kg }} د.ل</p>
                 <p><strong>إجمالي المبيعات:</strong> <span class="text-success">{{ sale.total_price }} د.ل</span></p>
-                {% if sale.participant %}
-                    <p><strong>المشارك:</strong> {{ sale.participant.name }}</p>
-                {% endif %}
-                {% if sale.notes %}
-                    <p><strong>ملاحظات:</strong> {{ sale.notes }}</p>
+                {% if sale.notes %}<p><strong>ملاحظات:</strong> {{ sale.notes }}</p>{% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white"><i class="fas fa-tree"></i> الأشجار المشتراة</div>
+            <div class="card-body">
+                {% if sale_trees %}
+                    <table class="table table-sm">
+                        <thead><tr><th>النوع</th><th>العدد</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+                        <tbody>
+                            {% for st in sale_trees %}
+                            <tr>
+                                <td>{{ st.tree.tree_type }}</td>
+                                <td>{{ st.quantity }}</td>
+                                <td>{{ st.price_per_tree }} د.ل</td>
+                                <td>{{ st.get_total_price|floatformat:2 }} د.ل</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot><tr class="table-primary"><th colspan="3" class="text-end">إجمالي الأشجار:</th><th>{{ trees_total|floatformat:2 }} د.ل</th></tr></tfoot>
+                    </table>
+                {% else %}
+                    <p class="text-muted">لا توجد أشجار مشتراة</p>
                 {% endif %}
             </div>
         </div>
     </div>
-    
+</div>
+
+<div class="row mt-3">
     <div class="col-md-6">
         <div class="card">
-            <div class="card-header bg-info text-white">
-                <i class="fas fa-tree"></i> الأشجار المشتراة
-            </div>
+            <div class="card-header bg-warning text-white"><i class="fas fa-coins"></i> مصروفات أخرى</div>
             <div class="card-body">
-                {% if sale_trees %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>نوع الشجرة</th>
-                                    <th>العدد</th>
-                                    <th>سعر الوحدة</th>
-                                    <th>الإجمالي</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for st in sale_trees %}
-                                <tr>
-                                    <td><span class="badge bg-success">{{ st.tree.tree_type }}</span></td>
-                                    <td>{{ st.quantity }}</td>
-                                    <td>{{ st.price_per_tree }} د.ل</td>
-                                    <td>{{ st.get_total_price|floatformat:2 }} د.ل</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                            <tfoot>
-                                <tr class="table-primary">
-                                    <th colspan="3" class="text-end">إجمالي تكلفة الأشجار:</th>
-                                    <th>{{ trees_total|floatformat:2 }} د.ل</th>
-                                </tr>
-                                <tr class="table-{% if remaining < 0 %}danger{% elif remaining == 0 %}warning{% else %}success{% endif %}">
-                                    <th colspan="3" class="text-end">المبلغ المتبقي:</th>
-                                    <th>{{ remaining|floatformat:2 }} د.ل</th>
-                                </tr>
-                            </tfoot>
-                        </table>
-                    </div>
+                {% if sale_expenses %}
+                    <table class="table table-sm">
+                        <thead><tr><th>النوع</th><th>العدد</th><th>السعر</th><th>الإجمالي</th></tr></thead>
+                        <tbody>
+                            {% for exp in sale_expenses %}
+                            <tr>
+                                <td>{{ exp.category.name }}</td>
+                                <td>{{ exp.quantity }}</td>
+                                <td>{{ exp.price_per_unit }} د.ل</td>
+                                <td>{{ exp.get_total_price|floatformat:2 }} د.ل</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot><tr class="table-warning"><th colspan="3" class="text-end">إجمالي المصروفات:</th><th>{{ expenses_total|floatformat:2 }} د.ل</th></tr></tfoot>
+                    </table>
                 {% else %}
-                    <p class="text-muted text-center">لا توجد أشجار مشتراة في هذا البيع</p>
+                    <p class="text-muted">لا توجد مصروفات أخرى</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-info text-white"><i class="fas fa-calculator"></i> الملخص المالي</div>
+            <div class="card-body">
+                <p><strong>إجمالي المبيعات:</strong> <span class="text-success">{{ sale.total_price|floatformat:2 }} د.ل</span></p>
+                <p><strong>تكلفة الأشجار:</strong> {{ trees_total|floatformat:2 }} د.ل</p>
+                <p><strong>مصروفات أخرى:</strong> {{ expenses_total|floatformat:2 }} د.ل</p>
+                <hr>
+                <p><strong>إجمالي المصروفات:</strong> {{ all_expenses|floatformat:2 }} د.ل</p>
+                <h4 class="{% if remaining < 0 %}text-danger{% elif remaining == 0 %}text-warning{% else %}text-success{% endif %}">
+                    المتبقي: {{ remaining|floatformat:2 }} د.ل
+                </h4>
             </div>
         </div>
     </div>

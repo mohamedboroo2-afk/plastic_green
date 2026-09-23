@@ -3,7 +3,7 @@
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
     <h1 class="h2">
-        <i class="fas fa-cart-plus text-success"></i> 
+        <i class="fas fa-cart-plus text-success"></i>
         {% if edit_mode %}تعديل عملية بيع{% else %}إدارة المبيعات{% endif %}
     </h1>
 </div>
@@ -43,32 +43,18 @@
                         <label class="form-label">ملاحظات</label>
                         {{ form.notes }}
                     </div>
-                    
+
                     <hr>
                     <h6 class="mb-2"><i class="fas fa-tree text-success"></i> الأشجار المشتراة</h6>
-                    {{ formset.management_form }}
+                    {{ tree_formset.management_form }}
                     <div id="trees-container">
-                        {% for tree_form in formset %}
+                        {% for tf in tree_formset %}
                             <div class="row mb-2 tree-form p-2 border rounded">
-                                <div class="col-md-4">
-                                    <label class="form-label small">نوع الشجرة</label>
-                                    {{ tree_form.tree }}
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">العدد</label>
-                                    {{ tree_form.quantity }}
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label small">سعر الشجرة</label>
-                                    {{ tree_form.price_per_tree }}
-                                </div>
+                                <div class="col-md-4">{{ tf.tree }}</div>
+                                <div class="col-md-3">{{ tf.quantity }}</div>
+                                <div class="col-md-3">{{ tf.price_per_tree }}</div>
                                 <div class="col-md-2">
-                                    <label class="form-label small">&nbsp;</label>
-                                    <div>
-                                        {% if formset.can_delete %}
-                                            <label class="text-danger small">{{ tree_form.DELETE }} حذف</label>
-                                        {% endif %}
-                                    </div>
+                                    {% if tree_formset.can_delete %}{{ tf.DELETE }}{% endif %}
                                 </div>
                             </div>
                         {% endfor %}
@@ -76,11 +62,32 @@
                     <button type="button" class="btn btn-outline-success btn-sm mb-2" onclick="addTreeForm()">
                         <i class="fas fa-plus"></i> إضافة شجرة أخرى
                     </button>
-                    
+
+                    <hr>
+                    <h6 class="mb-2"><i class="fas fa-coins text-warning"></i> مصروفات أخرى</h6>
+                    <p class="small text-muted">أصيص، أكياس قمامة، بنزين، نقل، إلخ</p>
+                    {{ expense_formset.management_form }}
+                    <div id="expenses-container">
+                        {% for ef in expense_formset %}
+                            <div class="row mb-2 expense-form p-2 border rounded">
+                                <div class="col-md-4">{{ ef.category }}</div>
+                                <div class="col-md-2">{{ ef.quantity }}</div>
+                                <div class="col-md-3">{{ ef.price_per_unit }}</div>
+                                <div class="col-md-2">{{ ef.description }}</div>
+                                <div class="col-md-1">
+                                    {% if expense_formset.can_delete %}{{ ef.DELETE }}{% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <button type="button" class="btn btn-outline-warning btn-sm mb-2" onclick="addExpenseForm()">
+                        <i class="fas fa-plus"></i> إضافة مصروف آخر
+                    </button>
+
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-2">
                         {% if edit_mode %}
                             <a href="{% url 'core:add_sale' %}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> إلغاء التعديل
+                                <i class="fas fa-times"></i> إلغاء
                             </a>
                         {% endif %}
                         <button type="submit" class="btn btn-{% if edit_mode %}warning{% else %}success{% endif %}">
@@ -110,9 +117,9 @@
                                     <th>التاريخ</th>
                                     <th>الوزن</th>
                                     <th>المبلغ</th>
-                                    <th>تكلفة الأشجار</th>
+                                    <th>المصروفات</th>
                                     <th>المتبقي</th>
-                                    <th>الإجراءات</th>
+                                    <th>إجراءات</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -122,21 +129,15 @@
                                     <td>{{ sale.sale_date|date:"Y-m-d" }}</td>
                                     <td>{{ sale.weight_kg|floatformat:1 }} كجم</td>
                                     <td class="text-success">{{ sale.total_price|floatformat:0 }} د.ل</td>
-                                    <td class="text-primary">{{ sale.get_trees_total_cost|floatformat:0 }} د.ل</td>
+                                    <td class="text-primary">{{ sale.get_all_expenses|floatformat:0 }} د.ل</td>
                                     <td class="{% if sale.get_remaining_amount < 0 %}text-danger{% elif sale.get_remaining_amount == 0 %}text-warning{% else %}text-success{% endif %}">
                                         {{ sale.get_remaining_amount|floatformat:0 }} د.ل
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="{% url 'core:sale_detail' sale.pk %}" class="btn btn-info" title="عرض التفاصيل">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{% url 'core:edit_sale' sale.pk %}" class="btn btn-warning" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'core:delete_sale' sale.pk %}" class="btn btn-danger" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذه العملية؟')">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
+                                            <a href="{% url 'core:sale_detail' sale.pk %}" class="btn btn-info"><i class="fas fa-eye"></i></a>
+                                            <a href="{% url 'core:edit_sale' sale.pk %}" class="btn btn-warning"><i class="fas fa-edit"></i></a>
+                                            <a href="{% url 'core:delete_sale' sale.pk %}" class="btn btn-danger" onclick="return confirm('هل أنت متأكد؟')"><i class="fas fa-trash"></i></a>
                                         </div>
                                     </td>
                                 </tr>
@@ -145,42 +146,32 @@
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-cart-plus fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">لا توجد مبيعات مسجلة حالياً</p>
-                        <p class="text-muted small">أضف أول عملية بيع من خلال النموذج المجاور</p>
-                    </div>
+                    <p class="text-muted text-center">لا توجد مبيعات مسجلة</p>
                 {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- إحصائيات سريعة -->
+<!-- إحصائيات -->
 <div class="row mt-4">
     <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="text-muted">إجمالي البلاستيك</h6>
-                <h3 class="text-success">{{ total_sales_weight|floatformat:1 }} <small>كجم</small></h3>
-            </div>
-        </div>
+        <div class="card"><div class="card-body text-center">
+            <h6 class="text-muted">إجمالي المبيعات</h6>
+            <h3 class="text-success">{{ total_sales_value|floatformat:0 }} <small>د.ل</small></h3>
+        </div></div>
     </div>
     <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="text-muted">إجمالي المبيعات</h6>
-                <h3 class="text-success">{{ total_sales_value|floatformat:0 }} <small>د.ل</small></h3>
-            </div>
-        </div>
+        <div class="card"><div class="card-body text-center">
+            <h6 class="text-muted">تكلفة الأشجار</h6>
+            <h3 class="text-primary">{{ total_trees_cost|floatformat:0 }} <small>د.ل</small></h3>
+        </div></div>
     </div>
     <div class="col-md-3">
-        <div class="card">
-            <div class="card-body text-center">
-                <h6 class="text-muted">تكلفة الأشجار</h6>
-                <h3 class="text-primary">{{ total_trees_cost|floatformat:0 }} <small>د.ل</small></h3>
-            </div>
-        </div>
+        <div class="card"><div class="card-body text-center">
+            <h6 class="text-muted">مصروفات أخرى</h6>
+            <h3 class="text-warning">{{ total_expenses_cost|floatformat:0 }} <small>د.ل</small></h3>
+        </div></div>
     </div>
     <div class="col-md-3">
         <div class="card {% if remaining_balance < 0 %}border-danger{% elif remaining_balance == 0 %}border-warning{% else %}border-success{% endif %}">
@@ -198,62 +189,38 @@
     function updateTotal() {
         const weight = parseFloat(document.querySelector('#id_weight_kg').value) || 0;
         const price = parseFloat(document.querySelector('#id_price_per_kg').value) || 0;
-        const total = weight * price;
-        document.querySelector('#total_price').value = total.toFixed(2);
-        return total;
+        document.querySelector('#total_price').value = (weight * price).toFixed(2);
     }
+    document.querySelector('#id_weight_kg').addEventListener('input', updateTotal);
+    document.querySelector('#id_price_per_kg').addEventListener('input', updateTotal);
 
-    function calculateTreesCost() {
-        let totalCost = 0;
-        const treeForms = document.querySelectorAll('.tree-form');
-        treeForms.forEach(form => {
-            const quantity = parseFloat(form.querySelector('input[id$="quantity"]').value) || 0;
-            const price = parseFloat(form.querySelector('input[id$="price_per_tree"]').value) || 0;
-            totalCost += quantity * price;
-        });
-        return totalCost;
-    }
+    let treeFormCount = {{ tree_formset.total_form_count }};
+    let expenseFormCount = {{ expense_formset.total_form_count }};
 
-    function updateRemaining() {
-        const totalSales = updateTotal();
-        const treesCost = calculateTreesCost();
-        const remaining = totalSales - treesCost;
-    }
-
-    document.querySelector('#id_weight_kg').addEventListener('input', updateRemaining);
-    document.querySelector('#id_price_per_kg').addEventListener('input', updateRemaining);
-
-    document.addEventListener('input', function(e) {
-        if (e.target.id && (e.target.id.includes('quantity') || e.target.id.includes('price_per_tree'))) {
-            updateRemaining();
-        }
-    });
-
-    let formCount = {{ formset.total_form_count }};
-    
     function addTreeForm() {
         const container = document.querySelector('#trees-container');
-        const lastForm = container.querySelector('.tree-form:last-child');
-        const newForm = lastForm.cloneNode(true);
-        
-        const regex = new RegExp('-' + (formCount - 1) + '-', 'g');
-        newForm.innerHTML = newForm.innerHTML.replace(regex, '-' + formCount + '-');
-        
-        newForm.querySelectorAll('input').forEach(input => {
-            if (input.type !== 'checkbox') {
-                input.value = '';
-            }
-        });
-        newForm.querySelectorAll('select').forEach(select => {
-            select.selectedIndex = 0;
-        });
-        
+        const newForm = container.querySelector('.tree-form:last-child').cloneNode(true);
+        const regex = new RegExp('trees-' + (treeFormCount - 1) + '-', 'g');
+        newForm.innerHTML = newForm.innerHTML.replace(regex, 'trees-' + treeFormCount + '-');
+        newForm.querySelectorAll('input').forEach(i => { if(i.type!=='checkbox') i.value=''; });
+        newForm.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
         container.appendChild(newForm);
-        formCount++;
-        document.querySelector('#id_saletree-TOTAL_FORMS').value = formCount;
-        updateRemaining();
+        treeFormCount++;
+        document.querySelector('#id_trees-TOTAL_FORMS').value = treeFormCount;
     }
 
-    setTimeout(updateRemaining, 100);
+    function addExpenseForm() {
+        const container = document.querySelector('#expenses-container');
+        const newForm = container.querySelector('.expense-form:last-child').cloneNode(true);
+        const regex = new RegExp('expenses-' + (expenseFormCount - 1) + '-', 'g');
+        newForm.innerHTML = newForm.innerHTML.replace(regex, 'expenses-' + expenseFormCount + '-');
+        newForm.querySelectorAll('input').forEach(i => { if(i.type!=='checkbox') i.value=''; });
+        newForm.querySelectorAll('select').forEach(s => s.selectedIndex = 0);
+        container.appendChild(newForm);
+        expenseFormCount++;
+        document.querySelector('#id_expenses-TOTAL_FORMS').value = expenseFormCount;
+    }
+
+    setTimeout(updateTotal, 100);
 </script>
 {% endblock %}

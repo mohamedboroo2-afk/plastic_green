@@ -6,7 +6,7 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from .models import Sale, Participant, Tree, TreeRequest, ExpenseCategory, SaleExpense
 from .forms import (
-    SaleForm, ParticipantForm, TreeForm, TreeRequestForm,
+    SaleForm, ParticipantForm, TreeForm, TreeRequestForm, EditTreeRequestForm,
     ConfirmRequestForm, ExpenseCategoryForm,
     SaleTreeFormSet, SaleExpenseFormSet
 )
@@ -31,10 +31,15 @@ def index(request):
         total_all_expenses = total_trees_cost + total_expenses_cost
         remaining_balance = total_sales_value - total_all_expenses
         total_participants = Participant.objects.filter(is_active=True).count()
+
         pending_requests = TreeRequest.objects.filter(status='pending').count()
+        purchased_requests = TreeRequest.objects.filter(status='purchased').count()
+        ready_requests = TreeRequest.objects.filter(status='ready').count()
+        completed_requests = TreeRequest.objects.filter(status='completed').count()
+
         recent_sales = Sale.objects.all()[:5]
-        pending_requests_list = TreeRequest.objects.filter(
-            status='pending'
+        active_requests = TreeRequest.objects.filter(
+            status__in=['pending', 'purchased', 'ready']
         ).order_by('position')[:10]
 
         context = {
@@ -46,8 +51,11 @@ def index(request):
             'remaining_balance': remaining_balance,
             'total_participants': total_participants,
             'pending_requests': pending_requests,
+            'purchased_requests': purchased_requests,
+            'ready_requests': ready_requests,
+            'completed_requests': completed_requests,
             'recent_sales': recent_sales,
-            'pending_requests_list': pending_requests_list,
+            'active_requests': active_requests,
             'is_admin': True,
         }
         return render(request, 'core/index.html', context)
@@ -112,7 +120,6 @@ def add_sale(request):
         'total_expenses_cost': total_expenses_cost,
         'total_all_expenses': total_all_expenses,
         'remaining_balance': remaining_balance,
-        'title': 'إدارة المبيعات'
     }
     return render(request, 'core/add_sale.html', context)
 
@@ -150,7 +157,6 @@ def edit_sale(request, pk):
         'sales': sales,
         'edit_mode': True,
         'edit_sale': sale,
-        'title': 'تعديل عملية بيع'
     }
     return render(request, 'core/add_sale.html', context)
 
@@ -356,7 +362,7 @@ def add_tree_request(request):
         form = TreeRequestForm(request.POST)
         if form.is_valid():
             tree_request = form.save()
-            messages.success(request, f'تم إضافة طلب الشجرة بنجاح! رقم الطلب: {tree_request.position}')
+            messages.success(request, f'تم إضافة طلب الشجرة بنجاح! رقم الدور: {tree_request.position}')
             return redirect('/requests/')
     else:
         form = TreeRequestForm()
@@ -365,21 +371,102 @@ def add_tree_request(request):
 
 @login_required
 def tree_requests_list(request):
+    """قائمة الطلبات الكاملة - للأدمن فقط"""
     if not is_admin(request.user):
         messages.warning(request, 'ليس لديك صلاحية لعرض هذه الصفحة')
         return redirect('/')
+
     return render(request, 'core/tree_requests_list.html', {
         'pending_requests': TreeRequest.objects.filter(status='pending').order_by('position'),
+        'purchased_requests': TreeRequest.objects.filter(status='purchased').order_by('position'),
+        'ready_requests': TreeRequest.objects.filter(status='ready').order_by('position'),
         'completed_requests': TreeRequest.objects.filter(status='completed').order_by('-completed_date'),
         'cancelled_requests': TreeRequest.objects.filter(status='cancelled').order_by('-request_date'),
     })
 
 
 @login_required
-def confirm_request(request, pk):
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
+def edit_tree_request(request, pk):
+    """تعديل نوع الشجرة في الطلب مع الحفاظ على رقم الدور"""
     tree_request = get_object_or_404(TreeRequest, pk=pk)
-    if tree_request.status == 'completed':
-        messages.warning(request, 'هذا الطلب مكتمل بالفعل!')
+
+    if tree_request.status not in ['pending', 'purchased', 'ready']:
+        messages.warning(request, 'لا يمكن تعديل هذا الطلب في حالته الحالية')
+        return redirect('/requests/')
+
+    if request.method == 'POST':
+        old_tree = tree_request.tree
+        form = EditTreeRequestForm(request.POST, instance=tree_request)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                f'تم تعديل طلب {tree_request.participant.name}: من "{old_tree}" إلى "{tree_request.tree}" - رقم الدور محفوظ: {tree_request.position}'
+            )
+            return redirect('/requests/')
+    else:
+        form = EditTreeRequestForm(instance=tree_request)
+
+    return render(request, 'core/edit_tree_request.html', {
+        'form': form,
+        'tree_request': tree_request,
+    })
+
+
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
+def mark_purchased(request, pk):
+    """تم شراء الشجرة من المشتل"""
+    tree_request = get_object_or_404(TreeRequest, pk=pk)
+
+    if tree_request.status != 'pending':
+        messages.warning(request, 'لا يمكن تنفيذ هذا الإجراء على الطلب')
+        return redirect('/requests/')
+
+    if request.method == 'POST':
+        tree_request.status = 'purchased'
+        tree_request.purchased_date = timezone.now()
+        tree_request.save()
+        messages.success(request, f'تم تسجيل شراء شجرة "{tree_request.tree}" للمشارك {tree_request.participant.name}')
+        return redirect('/requests/')
+
+    return render(request, 'core/mark_purchased.html', {'tree_request': tree_request})
+
+
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
+def mark_ready(request, pk):
+    """تجهيز الشجرة وإعطاء رقم تسليم"""
+    tree_request = get_object_or_404(TreeRequest, pk=pk)
+
+    if tree_request.status != 'purchased':
+        messages.warning(request, 'يجب شراء الشجرة أولاً')
+        return redirect('/requests/')
+
+    if request.method == 'POST':
+        tree_request.status = 'ready'
+        tree_request.ready_date = timezone.now()
+        if not tree_request.delivery_number:
+            tree_request.generate_delivery_number()
+        tree_request.save()
+        messages.success(
+            request,
+            f'✅ الشجرة جاهزة للتسليم! رقم التسليم: {tree_request.delivery_number}'
+        )
+        return redirect('/requests/')
+
+    return render(request, 'core/mark_ready.html', {'tree_request': tree_request})
+
+
+@login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
+def confirm_request(request, pk):
+    """تأكيد التسليم النهائي"""
+    tree_request = get_object_or_404(TreeRequest, pk=pk)
+
+    if tree_request.status != 'ready':
+        messages.warning(request, 'الشجرة ليست جاهزة للتسليم')
         return redirect('/requests/')
 
     if request.method == 'POST':
@@ -387,20 +474,25 @@ def confirm_request(request, pk):
         if form.is_valid():
             tree_request.status = 'completed'
             tree_request.completed_date = timezone.now()
-            tree_request.notes = (tree_request.notes or '') + f'\nتم الإكمال: {form.cleaned_data["notes"]}'
+            tree_request.notes = (tree_request.notes or '') + f'\nتم التسليم: {form.cleaned_data["notes"]}'
             tree_request.save()
 
+            # إعادة ترتيب أرقام الدور للطلبات النشطة فقط
             next_requests = TreeRequest.objects.filter(
-                position__gt=tree_request.position, status='pending'
+                position__gt=tree_request.position,
+                status__in=['pending', 'purchased', 'ready']
             ).order_by('position')
             for req in next_requests:
                 req.position -= 1
                 req.save()
 
-            messages.success(request, 'تم تأكيد استلام الشجرة بنجاح!')
+            messages.success(
+                request,
+                f'✅ تم تسليم الشجرة للمشارك {tree_request.participant.name} بنجاح!'
+            )
             return redirect('/requests/')
     else:
-        form = ConfirmRequestForm(initial={'trees_provided': tree_request.quantity})
+        form = ConfirmRequestForm()
 
     return render(request, 'core/confirm_request.html', {
         'tree_request': tree_request, 'form': form
@@ -408,6 +500,7 @@ def confirm_request(request, pk):
 
 
 @login_required
+@user_passes_test(is_admin, login_url='/', redirect_field_name=None)
 def cancel_request(request, pk):
     tree_request = get_object_or_404(TreeRequest, pk=pk)
     if tree_request.status == 'completed':
@@ -419,7 +512,8 @@ def cancel_request(request, pk):
         tree_request.save()
 
         next_requests = TreeRequest.objects.filter(
-            position__gt=tree_request.position, status='pending'
+            position__gt=tree_request.position,
+            status__in=['pending', 'purchased', 'ready']
         ).order_by('position')
         for req in next_requests:
             req.position -= 1

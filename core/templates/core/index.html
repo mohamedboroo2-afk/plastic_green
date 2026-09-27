@@ -25,8 +25,8 @@
     <div class="col-md-3 mb-3">
         <div class="card">
             <div class="card-body">
-                <h5 class="card-title text-muted">تكلفة الأشجار</h5>
-                <h2 class="card-text text-primary">{{ total_trees_cost|floatformat:0 }} <small>د.ل</small></h2>
+                <h5 class="card-title text-muted">إجمالي المصروفات</h5>
+                <h2 class="card-text text-primary">{{ total_all_expenses|floatformat:0 }} <small>د.ل</small></h2>
             </div>
         </div>
     </div>
@@ -42,35 +42,78 @@
     </div>
 </div>
 
+<!-- حالات الطلبات -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card border-warning">
+            <div class="card-body text-center">
+                <h6 class="text-muted">قيد الانتظار</h6>
+                <h3 class="text-warning">{{ pending_requests }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <h6 class="text-muted">تم الشراء</h6>
+                <h3 class="text-info">{{ purchased_requests }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-primary">
+            <div class="card-body text-center">
+                <h6 class="text-muted">جاهز للتسليم</h6>
+                <h3 class="text-primary">{{ ready_requests }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <h6 class="text-muted">مكتملة</h6>
+                <h3 class="text-success">{{ completed_requests }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-clock"></i> طلبات قيد الانتظار
-                <span class="badge bg-warning float-start">{{ pending_requests }}</span>
+                <i class="fas fa-clock"></i> الطلبات النشطة
+                <span class="badge bg-warning float-start">{{ active_requests.count }}</span>
             </div>
             <div class="card-body">
-                {% if pending_requests_list %}
+                {% if active_requests %}
                     <div class="list-group">
-                        {% for req in pending_requests_list %}
+                        {% for req in active_requests %}
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
                                     <strong>#{{ req.position }}</strong> - {{ req.participant.name }}
                                     <br>
-                                    <small>{{ req.tree.get_tree_type_display }} × {{ req.quantity }}</small>
+                                    <small>{{ req.tree.tree_type }} × {{ req.quantity }}</small>
                                 </div>
-                                <span class="badge {% if req.status == 'pending' %}bg-warning{% else %}bg-info{% endif %}">
+                                <span class="badge
+                                    {% if req.status == 'pending' %}bg-warning text-dark
+                                    {% elif req.status == 'purchased' %}bg-info
+                                    {% else %}bg-primary{% endif %}">
                                     {{ req.get_status_display }}
                                 </span>
                             </div>
                         {% endfor %}
                     </div>
+                    <a href="{% url 'core:tree_requests_list' %}" class="btn btn-sm btn-outline-success mt-2 w-100">
+                        عرض كل الطلبات <i class="fas fa-arrow-left"></i>
+                    </a>
                 {% else %}
-                    <p class="text-muted text-center">لا توجد طلبات قيد الانتظار</p>
+                    <p class="text-muted text-center">لا توجد طلبات نشطة</p>
                 {% endif %}
             </div>
         </div>
     </div>
+
     <div class="col-md-6 mb-4">
         <div class="card">
             <div class="card-header">
@@ -87,9 +130,7 @@
                                         <br>
                                         <small>{{ sale.weight_kg }} كجم - {{ sale.total_price }} د.ل</small>
                                     </div>
-                                    {% if sale.participant %}
-                                        <span class="badge bg-success">{{ sale.participant.name }}</span>
-                                    {% endif %}
+                                    <span class="badge bg-success">{{ sale.get_remaining_amount|floatformat:0 }} د.ل متبقي</span>
                                 </div>
                             </div>
                         {% endfor %}

@@ -40,7 +40,7 @@ class SaleExpenseAdmin(admin.ModelAdmin):
 
 @admin.register(TreeRequest)
 class TreeRequestAdmin(admin.ModelAdmin):
-    list_display = ['participant', 'tree', 'quantity', 'position', 'status', 'request_date']
+    list_display = ['participant', 'tree', 'quantity', 'position', 'status', 'delivery_number', 'request_date']
     list_filter = ['status', 'request_date']
-    search_fields = ['participant__name', 'tree__tree_type']
-    readonly_fields = ['position']
+    search_fields = ['participant__name', 'tree__tree_type', 'delivery_number']
+    readonly_fields = ['position', 'delivery_number']

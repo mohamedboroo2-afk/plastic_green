@@ -1,42 +1,50 @@
 {% extends 'core/base.html' %}
-{% block title %}تأكيد طلب - بلاستيك أخضر{% endblock %}
+{% block title %}تأكيد التسليم{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">تأكيد استلام الطلب</h1>
+    <h1 class="h2"><i class="fas fa-check-circle text-success"></i> تأكيد تسليم الشجرة</h1>
 </div>
 
-<div class="card">
-    <div class="card-body">
-        <h5>تفاصيل الطلب</h5>
-        <p><strong>المشارك:</strong> {{ tree_request.participant.name }}</p>
-        <p><strong>نوع الشجرة:</strong> {{ tree_request.tree.tree_type }}</p>
-        <p><strong>العدد المطلوب:</strong> {{ tree_request.quantity }}</p>
-        <p><strong>رقم الدور:</strong> {{ tree_request.position }}</p>
-        <p><strong>الحالة الحالية:</strong> {{ tree_request.get_status_display }}</p>
-        
-        <hr>
-        
-        <form method="post">
-            {% csrf_token %}
-            <div class="mb-3">
-                <label class="form-label">عدد الأشجار المقدمة</label>
-                {{ form.trees_provided }}
-                <small class="text-muted">العدد المطلوب: {{ tree_request.quantity }}</small>
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-info-circle"></i> تفاصيل التسليم
             </div>
-            <div class="mb-3">
-                <label class="form-label">ملاحظات الإكمال (اختياري)</label>
-                {{ form.notes }}
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <h5>رقم التسليم:</h5>
+                    <h2 class="badge bg-dark fs-3 p-3">{{ tree_request.delivery_number }}</h2>
+                </div>
+                <hr>
+                <p><strong>المشارك:</strong> {{ tree_request.participant.name }}</p>
+                {% if tree_request.participant.phone %}
+                <p><strong>رقم الموبايل:</strong> {{ tree_request.participant.phone }}</p>
+                {% endif %}
+                <p><strong>نوع الشجرة:</strong> {{ tree_request.tree.tree_type }}</p>
+                <p><strong>العدد:</strong> {{ tree_request.quantity }}</p>
+                <p><strong>رقم الدور:</strong> #{{ tree_request.position }}</p>
+                <p><strong>تاريخ التجهيز:</strong> {{ tree_request.ready_date|date:"Y-m-d H:i" }}</p>
+                <hr>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    تأكد من أن المشارك قدّم <strong>رقم التسليم: {{ tree_request.delivery_number }}</strong> قبل التسليم.
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات التسليم (اختياري)</label>
+                        {{ form.notes }}
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'core:tree_requests_list' %}" class="btn btn-secondary">إلغاء</a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check"></i> تأكيد التسليم
+                        </button>
+                    </div>
+                </form>
             </div>
-            
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                <a href="/requests/" class="btn btn-secondary">
-                    <i class="fas fa-times"></i> إلغاء
-                </a>
-                <button type="submit" class="btn btn-success">
-                    <i class="fas fa-check"></i> تأكيد الاستلام
-                </button>
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 {% endblock %}

@@ -46,19 +46,11 @@ class SaleExpenseForm(forms.ModelForm):
 
 
 SaleTreeFormSet = inlineformset_factory(
-    Sale,
-    SaleTree,
-    form=SaleTreeForm,
-    extra=2,
-    can_delete=True
+    Sale, SaleTree, form=SaleTreeForm, extra=2, can_delete=True
 )
 
 SaleExpenseFormSet = inlineformset_factory(
-    Sale,
-    SaleExpense,
-    form=SaleExpenseForm,
-    extra=2,
-    can_delete=True
+    Sale, SaleExpense, form=SaleExpenseForm, extra=2, can_delete=True
 )
 
 
@@ -68,7 +60,7 @@ class ParticipantForm(forms.ModelForm):
         fields = ['name', 'phone', 'address']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'الاسم الكامل'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اختياري - اتركه فارغاً إذا لم يوجد'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'اختياري'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'العنوان (اختياري)'}),
         }
 
@@ -78,7 +70,7 @@ class TreeForm(forms.ModelForm):
         model = Tree
         fields = ['tree_type', 'description']
         widgets = {
-            'tree_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مثال: تمر، رمان، مانجو، إلخ'}),
+            'tree_type': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مثال: تمر، رمان، مانجو'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'وصف اختياري'}),
         }
 
@@ -88,8 +80,8 @@ class ExpenseCategoryForm(forms.ModelForm):
         model = ExpenseCategory
         fields = ['name', 'description']
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مثال: أصيص، أكياس قمامة، بنزين، نقل'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2, 'placeholder': 'وصف اختياري'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'مثال: أصيص، أكياس قمامة، بنزين'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
 
 
@@ -110,14 +102,27 @@ class TreeRequestForm(forms.ModelForm):
         self.fields['participant'].label = "المشارك (ابحث بالاسم أو رقم الموبايل)"
 
 
+class EditTreeRequestForm(forms.ModelForm):
+    """نموذج تعديل نوع الشجرة في الطلب فقط - مع الحفاظ على رقم الدور"""
+    class Meta:
+        model = TreeRequest
+        fields = ['tree', 'quantity', 'notes']
+        widgets = {
+            'tree': forms.Select(attrs={'class': 'form-control'}),
+            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+        }
+        labels = {
+            'tree': 'نوع الشجرة الجديد',
+            'quantity': 'العدد',
+            'notes': 'ملاحظات',
+        }
+
+
 class ConfirmRequestForm(forms.Form):
-    trees_provided = forms.IntegerField(
-        min_value=1,
-        label="عدد الأشجار المقدمة",
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
+    """نموذج تأكيد التسليم النهائي"""
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-        label="ملاحظات الإكمال"
+        label="ملاحظات التسليم"
     )

@@ -6,7 +6,7 @@ from django.utils import timezone
 class Participant(models.Model):
     """نموذج المشاركين المتعاونين"""
     name = models.CharField(max_length=200, verbose_name="الاسم")
-    phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="رقم الموبايل")  # أصبح اختيارياً
+    phone = models.CharField(max_length=15, blank=True, null=True, verbose_name="رقم الموبايل")
     address = models.TextField(blank=True, null=True, verbose_name="العنوان")
     join_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الانضمام")
     is_active = models.BooleanField(default=True, verbose_name="نشط")
@@ -66,34 +66,24 @@ class Sale(models.Model):
     """نموذج عمليات البيع"""
     sale_date = models.DateField(default=timezone.now, verbose_name="تاريخ البيع")
     weight_kg = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
+        max_digits=10, decimal_places=2,
         validators=[MinValueValidator(0.01)],
         verbose_name="الوزن بالكيلو"
     )
     price_per_kg = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=2.50,
-        verbose_name="سعر الكيلو"
+        max_digits=10, decimal_places=2,
+        default=2.50, verbose_name="سعر الكيلو"
     )
     total_price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        editable=False,
-        verbose_name="إجمالي المبيعات"
+        max_digits=10, decimal_places=2,
+        editable=False, verbose_name="إجمالي المبيعات"
     )
     participant = models.ForeignKey(
-        Participant,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name="المشارك"
+        Participant, on_delete=models.SET_NULL,
+        null=True, blank=True, verbose_name="المشارك"
     )
     trees_purchased = models.ManyToManyField(
-        Tree,
-        through='SaleTree',
-        verbose_name="الأشجار المشتراة"
+        Tree, through='SaleTree', verbose_name="الأشجار المشتراة"
     )
     notes = models.TextField(blank=True, null=True, verbose_name="ملاحظات")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -108,25 +98,21 @@ class Sale(models.Model):
         super().save(*args, **kwargs)
 
     def get_trees_total_cost(self):
-        """إجمالي تكلفة الأشجار المشتراة"""
         total = 0
         for st in self.saletree_set.all():
             total += st.quantity * st.price_per_tree
         return total
 
     def get_expenses_total_cost(self):
-        """إجمالي تكلفة المصروفات الأخرى"""
         total = 0
         for exp in self.saleexpense_set.all():
             total += exp.quantity * exp.price_per_unit
         return total
 
     def get_all_expenses(self):
-        """إجمالي كل المصروفات (أشجار + أخرى)"""
         return self.get_trees_total_cost() + self.get_expenses_total_cost()
 
     def get_remaining_amount(self):
-        """المبلغ المتبقي بعد كل المصروفات"""
         return self.total_price - self.get_all_expenses()
 
     def __str__(self):
@@ -134,15 +120,13 @@ class Sale(models.Model):
 
 
 class SaleTree(models.Model):
-    """نموذج وسيط بين البيع والأشجار - مع سعر كل شجرة"""
+    """نموذج وسيط بين البيع والأشجار"""
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     tree = models.ForeignKey(Tree, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1, verbose_name="العدد")
     price_per_tree = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        verbose_name="سعر الشجرة"
+        max_digits=10, decimal_places=2,
+        default=0, verbose_name="سعر الشجرة"
     )
 
     class Meta:
@@ -157,15 +141,13 @@ class SaleTree(models.Model):
 
 
 class SaleExpense(models.Model):
-    """نموذج مصروفات البيع (أصيص، أكياس، بنزين، نقل، إلخ)"""
+    """نموذج مصروفات البيع"""
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE)
     category = models.ForeignKey(ExpenseCategory, on_delete=models.CASCADE, verbose_name="نوع المصروف")
     quantity = models.PositiveIntegerField(default=1, verbose_name="العدد")
     price_per_unit = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        verbose_name="سعر الوحدة"
+        max_digits=10, decimal_places=2,
+        default=0, verbose_name="سعر الوحدة"
     )
     description = models.CharField(max_length=255, blank=True, null=True, verbose_name="ملاحظة")
 
@@ -181,42 +163,41 @@ class SaleExpense(models.Model):
 
 
 class TreeRequest(models.Model):
-    """نموذج طلبات الأشجار"""
+    """نموذج طلبات الأشجار - مع المراحل الجديدة"""
     STATUS_CHOICES = [
-        ('pending', 'قيد الانتظار'),
-        ('completed', 'مكتمل'),
+        ('pending', 'قيد الانتظار'),           # الطلب مسجل، لم يتم الشراء بعد
+        ('purchased', 'تم الشراء'),            # تم شراء الشجرة من المشتل
+        ('ready', 'جاهز للتسليم'),             # جاهز، بانتظار حضور المشارك
+        ('completed', 'مكتمل'),                # تم التسليم
         ('cancelled', 'ملغي'),
     ]
 
     participant = models.ForeignKey(
-        Participant,
-        on_delete=models.CASCADE,
-        verbose_name="المشارك"
+        Participant, on_delete=models.CASCADE, verbose_name="المشارك"
     )
     tree = models.ForeignKey(
-        Tree,
-        on_delete=models.CASCADE,
-        verbose_name="نوع الشجرة"
+        Tree, on_delete=models.CASCADE, verbose_name="نوع الشجرة"
     )
     quantity = models.PositiveIntegerField(
-        validators=[MinValueValidator(1)],
-        verbose_name="العدد"
+        validators=[MinValueValidator(1)], verbose_name="العدد"
     )
     request_date = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الطلب")
     status = models.CharField(
-        max_length=20,
-        choices=STATUS_CHOICES,
-        default='pending',
-        verbose_name="الحالة"
+        max_length=20, choices=STATUS_CHOICES,
+        default='pending', verbose_name="الحالة"
     )
     position = models.PositiveIntegerField(
-        editable=False,
-        null=True,
-        blank=True,
-        verbose_name="رقم الدور"
+        editable=False, null=True, blank=True, verbose_name="رقم الدور"
+    )
+    # رقم التسليم الفريد (يعطى للمشارك عند تجهيز الشجرة)
+    delivery_number = models.CharField(
+        max_length=20, blank=True, null=True, unique=True,
+        verbose_name="رقم التسليم"
     )
     notes = models.TextField(blank=True, null=True, verbose_name="ملاحظات")
-    completed_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الإكمال")
+    purchased_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الشراء")
+    ready_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ التجهيز")
+    completed_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ التسليم")
 
     class Meta:
         verbose_name = "طلب شجرة"
@@ -226,10 +207,20 @@ class TreeRequest(models.Model):
     def save(self, *args, **kwargs):
         if not self.position:
             last_request = TreeRequest.objects.filter(
-                status='pending'
+                status__in=['pending', 'purchased', 'ready']
             ).order_by('-position').first()
             self.position = (last_request.position + 1) if last_request else 1
         super().save(*args, **kwargs)
+
+    def generate_delivery_number(self):
+        """توليد رقم تسليم فريد مثل: DEL-2026-0001"""
+        year = timezone.now().year
+        # عدد الطلبات المكتملة + الحالية + 1
+        count = TreeRequest.objects.filter(
+            status__in=['purchased', 'ready', 'completed']
+        ).count() + 1
+        self.delivery_number = f"DEL-{year}-{count:04d}"
+        return self.delivery_number
 
     def __str__(self):
         return f"{self.participant.name} - {self.tree} × {self.quantity} - {self.get_status_display()}"

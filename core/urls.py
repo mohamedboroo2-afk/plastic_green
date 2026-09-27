@@ -32,6 +32,9 @@ urlpatterns = [
     # طلبات الأشجار
     path('request/add/', views.add_tree_request, name='add_tree_request'),
     path('requests/', views.tree_requests_list, name='tree_requests_list'),
+    path('request/edit/<int:pk>/', views.edit_tree_request, name='edit_tree_request'),
+    path('request/purchase/<int:pk>/', views.mark_purchased, name='mark_purchased'),
+    path('request/ready/<int:pk>/', views.mark_ready, name='mark_ready'),
     path('request/confirm/<int:pk>/', views.confirm_request, name='confirm_request'),
     path('request/cancel/<int:pk>/', views.cancel_request, name='cancel_request'),
 

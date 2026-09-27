@@ -2,126 +2,245 @@
 {% block title %}قائمة الطلبات - بلاستيك أخضر{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-    <h1 class="h2">طلبات الأشجار</h1>
+    <h1 class="h2"><i class="fas fa-list text-success"></i> إدارة طلبات الأشجار</h1>
     <a href="{% url 'core:add_tree_request' %}" class="btn btn-success">
         <i class="fas fa-plus"></i> طلب جديد
     </a>
 </div>
 
-<!-- طلبات قيد الانتظار -->
+<!-- إحصائيات سريعة -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-2">
+        <div class="card border-warning">
+            <div class="card-body text-center py-2">
+                <h6 class="text-muted mb-0">قيد الانتظار</h6>
+                <h3 class="text-warning mb-0">{{ pending_requests.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card border-info">
+            <div class="card-body text-center py-2">
+                <h6 class="text-muted mb-0">تم الشراء</h6>
+                <h3 class="text-info mb-0">{{ purchased_requests.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card border-primary">
+            <div class="card-body text-center py-2">
+                <h6 class="text-muted mb-0">جاهز للتسليم</h6>
+                <h3 class="text-primary mb-0">{{ ready_requests.count }}</h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-2">
+        <div class="card border-success">
+            <div class="card-body text-center py-2">
+                <h6 class="text-muted mb-0">مكتملة</h6>
+                <h3 class="text-success mb-0">{{ completed_requests.count }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============ 1. قيد الانتظار ============ -->
 <h5 class="mb-3">
-    <span class="badge bg-warning">قيد الانتظار</span>
+    <span class="badge bg-warning text-dark"><i class="fas fa-clock"></i> قيد الانتظار</span>
     <span class="badge bg-secondary">{{ pending_requests.count }}</span>
 </h5>
 <div class="table-responsive mb-4">
     <table class="table table-hover">
-        <thead>
+        <thead class="table-warning">
             <tr>
-                <th>#</th>
+                <th>الدور</th>
                 <th>المشارك</th>
                 <th>نوع الشجرة</th>
                 <th>العدد</th>
                 <th>تاريخ الطلب</th>
-                <th>الحالة</th>
                 <th>الإجراءات</th>
             </tr>
         </thead>
         <tbody>
             {% for req in pending_requests %}
             <tr>
-                <td><strong>{{ req.position }}</strong></td>
+                <td><strong class="text-warning">#{{ req.position }}</strong></td>
                 <td>{{ req.participant.name }}</td>
-                <td>{{ req.tree.tree_type }}</td>
+                <td><span class="badge bg-success">{{ req.tree.tree_type }}</span></td>
                 <td>{{ req.quantity }}</td>
                 <td>{{ req.request_date|date:"Y-m-d" }}</td>
-                <td><span class="status-badge status-pending">قيد الانتظار</span></td>
                 <td>
-                    <a href="/request/confirm/{{ req.pk }}/" class="btn btn-sm btn-success">
-                        <i class="fas fa-check"></i> تأكيد
-                    </a>
-                    <a href="/request/cancel/{{ req.pk }}/" class="btn btn-sm btn-danger">
-                        <i class="fas fa-times"></i> إلغاء
-                    </a>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'core:edit_tree_request' req.pk %}" class="btn btn-warning" title="تعديل نوع الشجرة">
+                            <i class="fas fa-edit"></i> تعديل
+                        </a>
+                        <a href="{% url 'core:mark_purchased' req.pk %}" class="btn btn-info" title="تم الشراء">
+                            <i class="fas fa-shopping-cart"></i> تم الشراء
+                        </a>
+                        <a href="{% url 'core:cancel_request' req.pk %}" class="btn btn-danger" title="إلغاء" onclick="return confirm('هل أنت متأكد من الإلغاء؟')">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="7" class="text-center text-muted">لا توجد طلبات قيد الانتظار</td>
-            </tr>
+            <tr><td colspan="6" class="text-center text-muted">لا توجد طلبات قيد الانتظار</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- طلبات مكتملة -->
+<!-- ============ 2. تم الشراء ============ -->
 <h5 class="mb-3">
-    <span class="badge bg-success">مكتملة</span>
+    <span class="badge bg-info"><i class="fas fa-shopping-cart"></i> تم الشراء</span>
+    <span class="badge bg-secondary">{{ purchased_requests.count }}</span>
+</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-hover">
+        <thead class="table-info">
+            <tr>
+                <th>الدور</th>
+                <th>المشارك</th>
+                <th>نوع الشجرة</th>
+                <th>العدد</th>
+                <th>تاريخ الشراء</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in purchased_requests %}
+            <tr>
+                <td><strong class="text-info">#{{ req.position }}</strong></td>
+                <td>{{ req.participant.name }}</td>
+                <td><span class="badge bg-success">{{ req.tree.tree_type }}</span></td>
+                <td>{{ req.quantity }}</td>
+                <td>{{ req.purchased_date|date:"Y-m-d" }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'core:edit_tree_request' req.pk %}" class="btn btn-warning" title="تعديل نوع الشجرة">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'core:mark_ready' req.pk %}" class="btn btn-primary" title="تجهيز للتسليم">
+                            <i class="fas fa-box-open"></i> جاهز للتسليم
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">لا توجد طلبات تم شراؤها</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ============ 3. جاهز للتسليم ============ -->
+<h5 class="mb-3">
+    <span class="badge bg-primary"><i class="fas fa-box-open"></i> جاهز للتسليم</span>
+    <span class="badge bg-secondary">{{ ready_requests.count }}</span>
+</h5>
+<div class="table-responsive mb-4">
+    <table class="table table-hover">
+        <thead class="table-primary">
+            <tr>
+                <th>الدور</th>
+                <th>رقم التسليم</th>
+                <th>المشارك</th>
+                <th>نوع الشجرة</th>
+                <th>العدد</th>
+                <th>تاريخ التجهيز</th>
+                <th>الإجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for req in ready_requests %}
+            <tr>
+                <td><strong class="text-primary">#{{ req.position }}</strong></td>
+                <td><span class="badge bg-dark fs-6">{{ req.delivery_number }}</span></td>
+                <td>{{ req.participant.name }}</td>
+                <td><span class="badge bg-success">{{ req.tree.tree_type }}</span></td>
+                <td>{{ req.quantity }}</td>
+                <td>{{ req.ready_date|date:"Y-m-d" }}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a href="{% url 'core:edit_tree_request' req.pk %}" class="btn btn-warning" title="تعديل نوع الشجرة">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="{% url 'core:confirm_request' req.pk %}" class="btn btn-success" title="تم التسليم">
+                            <i class="fas fa-check"></i> تم التسليم
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted">لا توجد طلبات جاهزة للتسليم</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ============ 4. مكتملة ============ -->
+<h5 class="mb-3">
+    <span class="badge bg-success"><i class="fas fa-check-circle"></i> مكتملة</span>
     <span class="badge bg-secondary">{{ completed_requests.count }}</span>
 </h5>
 <div class="table-responsive mb-4">
     <table class="table table-hover">
-        <thead>
+        <thead class="table-success">
             <tr>
-                <th>#</th>
+                <th>الدور</th>
+                <th>رقم التسليم</th>
                 <th>المشارك</th>
                 <th>نوع الشجرة</th>
                 <th>العدد</th>
-                <th>تاريخ الإكمال</th>
-                <th>الحالة</th>
+                <th>تاريخ التسليم</th>
             </tr>
         </thead>
         <tbody>
             {% for req in completed_requests %}
             <tr>
-                <td>{{ req.position }}</td>
+                <td>#{{ req.position }}</td>
+                <td><span class="badge bg-dark">{{ req.delivery_number }}</span></td>
                 <td>{{ req.participant.name }}</td>
-                <td>{{ req.tree.tree_type }}</td>
+                <td><span class="badge bg-success">{{ req.tree.tree_type }}</span></td>
                 <td>{{ req.quantity }}</td>
                 <td>{{ req.completed_date|date:"Y-m-d" }}</td>
-                <td><span class="status-badge status-completed">مكتمل</span></td>
             </tr>
             {% empty %}
-            <tr>
-                <td colspan="6" class="text-center text-muted">لا توجد طلبات مكتملة</td>
-            </tr>
+            <tr><td colspan="6" class="text-center text-muted">لا توجد طلبات مكتملة</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- طلبات ملغية -->
+<!-- ============ 5. ملغية ============ -->
+{% if cancelled_requests %}
 <h5 class="mb-3">
-    <span class="badge bg-danger">ملغية</span>
+    <span class="badge bg-danger"><i class="fas fa-times-circle"></i> ملغية</span>
     <span class="badge bg-secondary">{{ cancelled_requests.count }}</span>
 </h5>
 <div class="table-responsive">
     <table class="table table-hover">
-        <thead>
+        <thead class="table-danger">
             <tr>
-                <th>#</th>
+                <th>الدور</th>
                 <th>المشارك</th>
                 <th>نوع الشجرة</th>
                 <th>العدد</th>
-                <th>تاريخ الإلغاء</th>
-                <th>الحالة</th>
+                <th>تاريخ الطلب</th>
             </tr>
         </thead>
         <tbody>
             {% for req in cancelled_requests %}
             <tr>
-                <td>{{ req.position }}</td>
+                <td>#{{ req.position }}</td>
                 <td>{{ req.participant.name }}</td>
                 <td>{{ req.tree.tree_type }}</td>
                 <td>{{ req.quantity }}</td>
                 <td>{{ req.request_date|date:"Y-m-d" }}</td>
-                <td><span class="status-badge status-cancelled">ملغي</span></td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="6" class="text-center text-muted">لا توجد طلبات ملغية</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
+{% endif %}
 {% endblock %}
